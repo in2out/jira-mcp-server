@@ -167,13 +167,13 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
     tools: [
       {
         name: "search_jira_issues",
-        description: "JQL을 사용하여 Jira 이슈를 검색합니다. 예: 'project = PROJ AND status = Open'",
+        description: "JQL을 사용하여 Jira 이슈를 검색합니다. 예: 'project = PROJ AND status = Open'. 중요: Jira 4.2.2 버전이므로 startOfDay(), endOfDay(), now() 같은 최신 JQL 함수는 지원하지 않습니다. 날짜 검색 시 반드시 'created >= \"2025-09-30\"' 또는 'created >= \"2025/09/30\"' 형식의 문자열 리터럴을 사용해야 합니다.",
         inputSchema: {
           type: "object",
           properties: {
             jql: {
               type: "string",
-              description: "Jira Query Language (JQL) 검색 쿼리",
+              description: "Jira Query Language (JQL) 검색 쿼리. 날짜는 문자열 형식으로 지정 (예: created >= \"2025-09-30\")",
             },
             maxResults: {
               type: "number",
