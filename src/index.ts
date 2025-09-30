@@ -253,6 +253,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       const issues = (result.issues || []).map((issue: any) => {
         return {
           key: issue.key || "",
+          link: `${JIRA_BASE_URL}/browse/${issue.key}`,
           summary: issue.summary || "",
           status: issue.status || "Unknown",
           assignee: issue.assignee || "Unassigned",
@@ -269,11 +270,15 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         content: [
           {
             type: "text",
-            text: JSON.stringify({
-              total: result.total || issues.length,
-              maxResults: result.maxResults || args.maxResults,
-              issues,
-            }, null, 2),
+            text: `Jira 이슈 검색 결과입니다.
+각 이슈의 정확한 링크는 'link' 필드를 참조하세요.
+Jira Base URL: ${JIRA_BASE_URL}
+
+${JSON.stringify({
+  total: result.total || issues.length,
+  maxResults: result.maxResults || args.maxResults,
+  issues,
+}, null, 2)}`,
           },
         ],
       };
@@ -296,6 +301,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
       const formattedIssue = {
         key: issue.key || "",
+        link: `${JIRA_BASE_URL}/browse/${issue.key}`,
         summary: getFieldValue(fields.summary) || safeGet(fields, 'summary.value', ''),
         description: getFieldValue(fields.description) || safeGet(fields, 'description.value', ''),
         status: safeGet(fields, 'status.value.name') || safeGet(fields, 'status.name', 'Unknown'),
@@ -315,7 +321,10 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         content: [
           {
             type: "text",
-            text: JSON.stringify(formattedIssue, null, 2),
+            text: `Jira 이슈 상세 정보입니다.
+정확한 링크: ${JIRA_BASE_URL}/browse/${issue.key}
+
+${JSON.stringify(formattedIssue, null, 2)}`,
           },
         ],
       };
@@ -327,6 +336,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       const formattedProjects = (Array.isArray(projects) ? projects : []).map((project: any) => ({
         key: project.key || "",
         name: project.name || "",
+        link: `${JIRA_BASE_URL}/browse/${project.key}`,
         lead: safeGet(project, 'lead.displayName') || safeGet(project, 'lead.name', 'Unknown'),
         description: project.description || "",
       }));
@@ -351,6 +361,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       const formattedProject = {
         key: project.key || "",
         name: project.name || "",
+        link: `${JIRA_BASE_URL}/browse/${project.key}`,
         description: project.description || "",
         lead: safeGet(project, 'lead.displayName') || safeGet(project, 'lead.name', 'Unknown'),
         url: project.url || "",
