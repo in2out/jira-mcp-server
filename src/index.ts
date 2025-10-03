@@ -4,6 +4,8 @@ import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 import {
   CallToolRequestSchema,
   ListToolsRequestSchema,
+  ListPromptsRequestSchema,
+  GetPromptRequestSchema,
 } from "@modelcontextprotocol/sdk/types.js";
 import { XMLParser } from "fast-xml-parser";
 
@@ -157,9 +159,131 @@ const server = new Server(
   {
     capabilities: {
       tools: {},
+      prompts: {},
     },
   }
 );
+
+// 프롬프트 목록 제공
+server.setRequestHandler(ListPromptsRequestSchema, async () => {
+  return {
+    prompts: [
+      {
+        name: "jira-search",
+        description: "JQL을 사용하여 Jira 이슈를 검색합니다",
+        arguments: [
+          {
+            name: "jql",
+            description: "Jira Query Language (JQL) 검색 쿼리",
+            required: true,
+          },
+          {
+            name: "maxResults",
+            description: "최대 결과 수 (기본값: 50)",
+            required: false,
+          },
+        ],
+      },
+      {
+        name: "jira-issue",
+        description: "특정 Jira 이슈의 상세 정보를 가져옵니다",
+        arguments: [
+          {
+            name: "issueKey",
+            description: "이슈 키 (예: PROJ-123)",
+            required: true,
+          },
+        ],
+      },
+      {
+        name: "jira-projects",
+        description: "접근 가능한 모든 Jira 프로젝트 목록을 가져옵니다",
+        arguments: [],
+      },
+      {
+        name: "jira-project",
+        description: "특정 프로젝트의 상세 정보를 가져옵니다",
+        arguments: [
+          {
+            name: "projectKey",
+            description: "프로젝트 키 (예: PROJ)",
+            required: true,
+          },
+        ],
+      },
+    ],
+  };
+});
+
+// 프롬프트 실행 처리
+server.setRequestHandler(GetPromptRequestSchema, async (request) => {
+  const { name, arguments: args } = request.params;
+
+  if (name === "jira-search") {
+    const jql = args?.jql as string;
+    const maxResults = typeof args?.maxResults === 'number' ? args.maxResults : 50;
+
+    return {
+      messages: [
+        {
+          role: "user",
+          content: {
+            type: "text",
+            text: `JQL을 사용하여 Jira 이슈를 검색합니다.\n\nJQL: ${jql}\n최대 결과: ${maxResults}\n\nsearch_jira_issues 도구를 사용해서 검색해주세요.`,
+          },
+        },
+      ],
+    };
+  }
+
+  if (name === "jira-issue") {
+    const issueKey = args?.issueKey as string;
+
+    return {
+      messages: [
+        {
+          role: "user",
+          content: {
+            type: "text",
+            text: `Jira 이슈의 상세 정보를 가져옵니다.\n\n이슈 키: ${issueKey}\n\nget_jira_issue 도구를 사용해서 조회해주세요.`,
+          },
+        },
+      ],
+    };
+  }
+
+  if (name === "jira-projects") {
+    return {
+      messages: [
+        {
+          role: "user",
+          content: {
+            type: "text",
+            text: `접근 가능한 모든 Jira 프로젝트 목록을 가져옵니다.\n\nlist_jira_projects 도구를 사용해서 조회해주세요.`,
+          },
+        },
+      ],
+    };
+  }
+
+  if (name === "jira-project") {
+    const projectKey = args?.projectKey as string;
+
+    return {
+      messages: [
+        {
+          role: "user",
+          content: {
+            type: "text",
+            text: `특정 프로젝트의 상세 정보를 가져옵니다.\n\n프로젝트 키: ${projectKey}\n\nget_jira_project 도구를 사용해서 조회해주세요.`,
+          },
+        },
+      ],
+    };
+  }
+
+  throw new Error(`Unknown prompt: ${name}`);
+});
 
 // 도구 목록 제공
 server.setRequestHandler(ListToolsRequestSchema, async () => {
